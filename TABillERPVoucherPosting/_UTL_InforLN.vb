@@ -17,6 +17,14 @@ Namespace ERP
         End If
         oRet.FunctionName = FunctionName
         oRet.Arguments = Arguments
+        '==========================================
+        'As it is causing UnHandled Error in BW API
+        'Retry in this case only
+        '2 sec delay in retry
+        Dim RetryCount As Integer = 5
+        Dim Retryed As Integer = 1
+        '==========================================
+Retry:
         Try
           mRet = oBaaN.ParseExecFunction(parseDLLName, mSource)
           If oBaaN.Error <> 0 Then
@@ -33,6 +41,11 @@ Namespace ERP
             oRet.RetStr = "BaaN Disconnected. Error : " & oRet.RetStr
           End If
         Catch ex As Exception
+          If Retryed < RetryCount Then
+            Retryed += 1
+            Threading.Thread.Sleep(2000)
+            GoTo Retry
+          End If
           Disconnect()
           oRet.RetVal = 2
           oRet.RetStr = "Fatal error. : BaaN Disconnected."
